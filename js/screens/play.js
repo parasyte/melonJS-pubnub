@@ -14,6 +14,21 @@ game.PlayScreen = me.ScreenObject.extend({
 		
 		// play some music
 		me.audio.playTrack("DST-GameForest");
+
+		// Instantiate the Multiplayer object
+		game.mp = new Multiplayer(function (x, y) {
+		// Create a new player object
+		var obj = me.entityPool.newInstanceOf("mainplayer", x, y, {
+			spritewidth : 72,
+			spriteheight : 98,
+			isMP : true
+		});
+
+		me.game.add(obj, 4);
+		me.game.sort();
+
+		return obj;
+		});
 	},
 	
 	/**	

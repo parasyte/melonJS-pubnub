@@ -16,7 +16,9 @@ var game = {
 	 * Initialize the application
 	 */
 	onload: function() {
-	
+		me.sys.pauseOnBlur = false;
+		me.sys.stopOnBlur = false;
+
 		// init the video
 		if (!me.video.init('screen', 800, 600, true, 'auto')) {
 			alert("Sorry but your browser does not support html 5 canvas. Please try with another one!");

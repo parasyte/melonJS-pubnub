@@ -22,16 +22,20 @@ game.PlayerEntity = me.ObjectEntity.extend({
 		
 		this.mutipleJump = 1;
 
-		// set the display around our position
-		me.game.viewport.follow(this, me.game.viewport.AXIS.HORIZONTAL);
-				
-		// enable keyboard
-		me.input.bindKey(me.input.KEY.LEFT,	 "left");
-		me.input.bindKey(me.input.KEY.RIGHT, "right");
-		me.input.bindKey(me.input.KEY.X,	"jump", true);
-		me.input.bindKey(me.input.KEY.UP,	"up");
-		me.input.bindKey(me.input.KEY.DOWN,	"down");
+		this.isMP = settings.isMP;
+		this.step = 0;
 
+		if (!this.isMP) {
+			// set the display around our position
+			me.game.viewport.follow(this, me.game.viewport.AXIS.HORIZONTAL);
+
+			// enable keyboard
+			me.input.bindKey(me.input.KEY.LEFT,	 "left");
+			me.input.bindKey(me.input.KEY.RIGHT, "right");
+			me.input.bindKey(me.input.KEY.X,	"jump", true);
+			me.input.bindKey(me.input.KEY.UP,	"up");
+			me.input.bindKey(me.input.KEY.DOWN,	"down");
+		}
 		
 		// set a renderable
 		this.renderable = game.texture.createAnimationFromName([
@@ -56,25 +60,26 @@ game.PlayerEntity = me.ObjectEntity.extend({
 		
 	------			*/
 	update : function () {
-		
-		if (me.input.isKeyPressed('left'))	{
-			this.vel.x -= this.accel.x * me.timer.tick;
-			this.flipX(true);
-		} else if (me.input.isKeyPressed('right')) {
-			this.vel.x += this.accel.x * me.timer.tick;
-			this.flipX(false);
-		}
-		
-		if (me.input.isKeyPressed('jump')) {
-			this.jumping = true;
-
-			// reset the dblJump flag if off the ground
-			this.mutipleJump = (this.vel.y === 0)?1:this.mutipleJump;
+		if (!this.isMP) {
+			if (me.input.isKeyPressed('left'))	{
+				this.vel.x -= this.accel.x * me.timer.tick;
+				this.flipX(true);
+			} else if (me.input.isKeyPressed('right')) {
+				this.vel.x += this.accel.x * me.timer.tick;
+				this.flipX(false);
+			}
 			
-			if (this.mutipleJump<=2) {
-				// easy 'math' for double jump
-				this.vel.y -= (this.maxVel.y * this.mutipleJump++) * me.timer.tick;
-				me.audio.play("jump", false);
+			if (me.input.isKeyPressed('jump')) {
+				this.jumping = true;
+
+				// reset the dblJump flag if off the ground
+				this.mutipleJump = (this.vel.y === 0)?1:this.mutipleJump;
+
+				if (this.mutipleJump<=2) {
+					// easy 'math' for double jump
+					this.vel.y -= (this.maxVel.y * this.mutipleJump++) * me.timer.tick;
+					me.audio.play("jump", false);
+				}
 			}
 		}
 			
@@ -84,12 +89,14 @@ game.PlayerEntity = me.ObjectEntity.extend({
 		// check if we fell into a hole
 		if (!this.inViewport && (this.pos.y > me.video.getHeight())) {
 			// if yes reset the game
+			if (!this.isMP) {
+				me.game.viewport.fadeIn('#fff', 150, function(){
+					me.audio.play("die", false);
+					me.levelDirector.reloadLevel();
+					me.game.viewport.fadeOut('#fff', 150);
+				});
+			}
 			me.game.remove(this);
-			me.game.viewport.fadeIn('#fff', 150, function(){
-				me.audio.play("die", false);
-				me.levelDirector.reloadLevel();
-				me.game.viewport.fadeOut('#fff', 150);
-			});
 			return true;
 		}
 		
@@ -121,6 +128,29 @@ game.PlayerEntity = me.ObjectEntity.extend({
 		
 		// check if we moved (a "stand" animation would definitely be cleaner)
 		if (this.vel.x!=0 || this.vel.y!=0 || (this.renderable&&this.renderable.isFlickering())) {
+			if (this.vel.x !== 0)
+				this.flipX(this.vel.x < 0);
+
+			if (!this.isMP) {
+				// Check if it's time to send a message
+				if (this.step == 0) {
+					game.mp.sendMessage({
+						action : "update",
+						pos : {
+							x : this.pos.x,
+							y : this.pos.y
+						},
+						vel : {
+							x : this.vel.x,
+							y : this.vel.y
+						}
+					});
+				}
+
+				if (this.step++ > 3)
+				this.step = 0;
+			}
+
 			this.parent();
 			return true;
 		}
