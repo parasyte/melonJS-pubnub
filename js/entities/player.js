@@ -14,33 +14,38 @@ game.PlayerEntity = me.Entity.extend({
 
         this.mutipleJump = 1;
 
-        // set the display around our position
-        me.game.viewport.follow(this, me.game.viewport.AXIS.BOTH);
+        this.isMP = settings.isMP;
+        this.step = 0;
 
-        // enable keyboard
-        me.input.bindKey(me.input.KEY.LEFT,  "left");
-        me.input.bindKey(me.input.KEY.RIGHT, "right");
-        me.input.bindKey(me.input.KEY.X,     "jump", true);
-        me.input.bindKey(me.input.KEY.UP,    "jump", true);
-        me.input.bindKey(me.input.KEY.DOWN,  "down");
+        if (!this.isMP) {
+            // set the display around our position
+            me.game.viewport.follow(this, me.game.viewport.AXIS.BOTH);
 
-        me.input.bindKey(me.input.KEY.A,     "left");
-        me.input.bindKey(me.input.KEY.D,     "right");
-        me.input.bindKey(me.input.KEY.W,     "jump", true);
-        me.input.bindKey(me.input.KEY.S,     "down");
+            // enable keyboard
+            me.input.bindKey(me.input.KEY.LEFT,  "left");
+            me.input.bindKey(me.input.KEY.RIGHT, "right");
+            me.input.bindKey(me.input.KEY.X,     "jump", true);
+            me.input.bindKey(me.input.KEY.UP,    "jump", true);
+            me.input.bindKey(me.input.KEY.DOWN,  "down");
 
-        me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.FACE_1}, me.input.KEY.UP);
-        me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.FACE_2}, me.input.KEY.UP);
-        me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.DOWN}, me.input.KEY.DOWN);
-        me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.FACE_3}, me.input.KEY.DOWN);
-        me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.FACE_4}, me.input.KEY.DOWN);
-        me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.LEFT}, me.input.KEY.LEFT);
-        me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.RIGHT}, me.input.KEY.RIGHT);
+            me.input.bindKey(me.input.KEY.A,     "left");
+            me.input.bindKey(me.input.KEY.D,     "right");
+            me.input.bindKey(me.input.KEY.W,     "jump", true);
+            me.input.bindKey(me.input.KEY.S,     "down");
 
-        // map axes
-        me.input.bindGamepad(0, {type:"axes", code: me.input.GAMEPAD.AXES.LX, threshold: -0.5}, me.input.KEY.LEFT);
-        me.input.bindGamepad(0, {type:"axes", code: me.input.GAMEPAD.AXES.LX, threshold: 0.5}, me.input.KEY.RIGHT);
-        me.input.bindGamepad(0, {type:"axes", code: me.input.GAMEPAD.AXES.LY, threshold: -0.5}, me.input.KEY.UP);
+            me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.FACE_1}, me.input.KEY.UP);
+            me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.FACE_2}, me.input.KEY.UP);
+            me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.DOWN}, me.input.KEY.DOWN);
+            me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.FACE_3}, me.input.KEY.DOWN);
+            me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.FACE_4}, me.input.KEY.DOWN);
+            me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.LEFT}, me.input.KEY.LEFT);
+            me.input.bindGamepad(0, {type: "buttons", code: me.input.GAMEPAD.BUTTONS.RIGHT}, me.input.KEY.RIGHT);
+
+            // map axes
+            me.input.bindGamepad(0, {type:"axes", code: me.input.GAMEPAD.AXES.LX, threshold: -0.5}, me.input.KEY.LEFT);
+            me.input.bindGamepad(0, {type:"axes", code: me.input.GAMEPAD.AXES.LX, threshold: 0.5}, me.input.KEY.RIGHT);
+            me.input.bindGamepad(0, {type:"axes", code: me.input.GAMEPAD.AXES.LY, threshold: -0.5}, me.input.KEY.UP);
+        }
 
         // set a renderable
         this.renderable = game.texture.createAnimationFromName([
@@ -65,31 +70,32 @@ game.PlayerEntity = me.Entity.extend({
 
     ------            */
     update : function (dt) {
-
-        if (me.input.isKeyPressed("left"))    {
-            this.body.vel.x -= this.body.accel.x * me.timer.tick;
-            this.renderable.flipX(true);
-        } else if (me.input.isKeyPressed("right")) {
-            this.body.vel.x += this.body.accel.x * me.timer.tick;
-            this.renderable.flipX(false);
-        }
-
-        if (me.input.isKeyPressed("jump")) {
-            this.body.jumping = true;
-
-            if (this.multipleJump <= 2) {
-                // easy "math" for double jump
-                this.body.vel.y -= (this.body.maxVel.y * this.multipleJump++) * me.timer.tick;
-                me.audio.play("jump", false);
+        if (!this.isMP) {
+            if (me.input.isKeyPressed("left"))    {
+                this.body.vel.x -= this.body.accel.x * me.timer.tick;
+                this.renderable.flipX(true);
+            } else if (me.input.isKeyPressed("right")) {
+                this.body.vel.x += this.body.accel.x * me.timer.tick;
+                this.renderable.flipX(false);
             }
-        }
-        else if (!this.body.falling && !this.body.jumping) {
-            // reset the multipleJump flag if on the ground
-            this.multipleJump = 1;
-        }
-        else if (this.body.falling && this.multipleJump < 2) {
-            // reset the multipleJump flag if falling
-            this.multipleJump = 2;
+
+            if (me.input.isKeyPressed("jump")) {
+                this.body.jumping = true;
+
+                if (this.multipleJump <= 2) {
+                    // easy "math" for double jump
+                    this.body.vel.y -= (this.body.maxVel.y * this.multipleJump++) * me.timer.tick;
+                    me.audio.play("jump", false);
+                }
+            }
+            else if (!this.body.falling && !this.body.jumping) {
+                // reset the multipleJump flag if on the ground
+                this.multipleJump = 1;
+            }
+            else if (this.body.falling && this.multipleJump < 2) {
+                // reset the multipleJump flag if falling
+                this.multipleJump = 2;
+            }
         }
 
         // apply physics to the body (this moves the entity)
@@ -98,12 +104,14 @@ game.PlayerEntity = me.Entity.extend({
         // check if we fell into a hole
         if (!this.inViewport && (this.pos.y > me.video.renderer.getHeight())) {
             // if yes reset the game
+            if (!this.isMP) {
+                me.game.viewport.fadeIn("#fff", 150, function(){
+                    me.audio.play("die", false);
+                    me.levelDirector.reloadLevel();
+                    me.game.viewport.fadeOut("#fff", 150);
+                });
+            }
             me.game.world.removeChild(this);
-            me.game.viewport.fadeIn("#fff", 150, function(){
-                me.audio.play("die", false);
-                me.levelDirector.reloadLevel();
-                me.game.viewport.fadeOut("#fff", 150);
-            });
             return true;
         }
 
@@ -114,6 +122,30 @@ game.PlayerEntity = me.Entity.extend({
         if (this.body.vel.x !== 0 || this.body.vel.y !== 0 ||
             (this.renderable && this.renderable.isFlickering())
         ) {
+            if (this.renderable && this.body.vel.x !== 0) {
+                this.renderable.flipX(this.body.vel.x < 0);
+            }
+
+            if (!this.isMP) {
+                // Check if it's time to send a message
+                if (this.step == 0) {
+                    game.mp.sendMessage({
+                        action : "update",
+                        pos : {
+                            x : this.body.pos.x,
+                            y : this.body.pos.y
+                        },
+                        vel : {
+                            x : this.body.vel.x,
+                            y : this.body.vel.y
+                        }
+                    });
+                }
+
+                if (this.step++ > 3)
+                this.step = 0;
+            }
+
             this._super(me.Entity, "update", [dt]);
             return true;
         }

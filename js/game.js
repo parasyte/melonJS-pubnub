@@ -16,6 +16,8 @@ var game = {
      * Initialize the application
      */
     onload: function() {
+        me.sys.pauseOnBlur = false;
+        me.sys.stopOnBlur = false;
 
         // init the video
         if (!me.video.init(800, 600, {wrapper : "screen", scale : "auto", scaleMethod : "flex-width", renderer : me.video.AUTO, subPixel : false })) {
